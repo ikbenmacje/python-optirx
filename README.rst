@@ -12,7 +12,7 @@ cannot be used with free toolchains (GCC, Clang). OptiRX is based on
 the direct depacketization example from the SDK and does not use
 NatNet SDK.
 
-Compatibility: Tracking Tools 2.5.0.
+Compatibility: Tracking Tools 2.5.0, Motive 1.5.0.
 
 Alternatives:
 

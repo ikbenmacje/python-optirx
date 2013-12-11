@@ -107,7 +107,9 @@ def _unpack_cstring(data, maxstrlen):
     ('abc', 'foobar')
 
     """
-    (strbuf,) = struct.unpack("%ds" % maxstrlen, data[:maxstrlen])
+    databuf = data[:maxstrlen]
+    databuflen = min(len(databuf), maxstrlen)
+    (strbuf,) = struct.unpack("%ds" % databuflen, databuf)
     s = strbuf.split("\0", 1)[0]
     sz = len(s) + 1
     return s, data[sz:]
