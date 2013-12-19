@@ -58,6 +58,7 @@ SOCKET_BUFSIZE = 0x100000
 #  - union of possible payloads (MAX_PACKETSIZE bytes)
 PACKET_FORMAT =  "=" + "2H" + ("%dB" % MAX_PACKETSIZE)
 
+
 # sender payload struct (PacketClient.cpp:57)
 #  - szName (string MAX_NAMELENGTH),
 #  - Version (4 unsigned chars),
