@@ -36,7 +36,7 @@ NAT_TYPES = { NAT_PING: "ping",
 
 
 MAX_NAMELENGTH =              256
-MAX_PACKETSIZE =              100000              # max size of packet (actual size is dynamic)
+MAX_PAYLOADSIZE =             100000
 MULTICAST_ADDRESS =           "239.255.42.99"     # IANA, local network
 PORT_COMMAND =                1510
 PORT_DATA =                   1511                # Default multicast group
@@ -49,8 +49,9 @@ SOCKET_BUFSIZE = 0x100000
 # sPacket struct (PacketClient.cpp:65)
 #  - iMessage (unsigned short),
 #  - nDataBytes (unsigned short),
-#  - union of possible payloads (MAX_PACKETSIZE bytes)
-PACKET_FORMAT =  "=" + "2H" + ("%dB" % MAX_PACKETSIZE)
+#  - union of possible payloads (MAX_PAYLOADSIZE bytes)
+PACKET_FORMAT =  "=" + "2H" + ("%dB" % MAX_PAYLOADSIZE)
+MAX_PACKETSIZE = struct.calcsize(PACKET_FORMAT)
 
 
 # sender payload struct (PacketClient.cpp:57)
@@ -315,10 +316,9 @@ def demo_recv_data():
         encoder.FLOAT_REPR = lambda o: ("%.4f" % o)
 
     dsock = mkdatasock()
-    bufsize = struct.calcsize(PACKET_FORMAT)
     version = (2, 5, 0, 0)
     while True:
-        data = dsock.recv(bufsize)
+        data = dsock.recv(MAX_PACKETSIZE)
         packet = unpack(data, version=version)
         if type(packet) is SenderData:
             version = packet.natnet_version
