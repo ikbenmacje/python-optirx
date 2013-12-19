@@ -5,6 +5,12 @@ from __future__ import print_function
 import socket
 import struct
 from collections import namedtuple
+try:
+    from simplejson import dumps, encoder
+    encoder.FLOAT_REPR = lambda o: ("%.4f" % o)
+except ImportError:
+    from json import dumps, encoder
+    encoder.FLOAT_REPR = lambda o: ("%.4f" % o)
 
 
 ###
@@ -206,51 +212,14 @@ def mkdatasock(ip_address=None, multicast_address=MULTICAST_ADDRESS, port=PORT_D
 ###
 
 
-def _demo_print_markers(markers, depth):
-    for x, y, z in markers:
-        print("  "*depth + "- [ % 7.1f,  % 7.1f,  % 7.1f ]" % (x*1000, y*1000, z*1000))
-
-
-def _demo_print_frame(frame):
-
-    if not (frame.other_markers or frame.sets):
-        return  # don't print empty frames
-
-    print("- frame_of_data:")
-    print("    frameno: %d" % frame.frameno)
-
-    if frame.sets:
-        print("    sets:")
-        for s in frame.sets:
-            print("      - setname:", s)
-            print("        markers:")
-            _demo_print_markers(frame.sets[s], depth=5)
-
-    if frame.other_markers:
-        print("    other_markers:")
-        _demo_print_markers(frame.other_markers, depth=3)
-
-    print()
-
-
-def _demo_print_sender(sender):
-    print("- sender:")
-    print("    appname:", sender.appname)
-    print("    version:", sender.version)
-    print("    natnet_version:", sender.natnet_version)
-    print()
-
-
 def demo_recv_data():
     dsock = mkdatasock()
     bufsize = struct.calcsize(PACKET_FORMAT)
     while True:
         data = dsock.recv(bufsize)
         packet = unpack(data)
-        if type(packet) is SenderData:
-            _demo_print_sender(packet)
-        elif type(packet) is FrameOfData:
-            _demo_print_frame(packet)
+        if type(packet) in [SenderData, FrameOfData]:
+            print(dumps(packet.__dict__, namedtuple_as_object=1, indent=4))
         else:
             print(packet)
 
