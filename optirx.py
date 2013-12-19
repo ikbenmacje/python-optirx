@@ -5,12 +5,6 @@ from __future__ import print_function
 import socket
 import struct
 from collections import namedtuple
-try:
-    from simplejson import dumps, encoder
-    encoder.FLOAT_REPR = lambda o: ("%.4f" % o)
-except ImportError:
-    from json import dumps, encoder
-    encoder.FLOAT_REPR = lambda o: ("%.4f" % o)
 
 
 ###
@@ -313,6 +307,13 @@ def mkdatasock(ip_address=None, multicast_address=MULTICAST_ADDRESS, port=PORT_D
 
 
 def demo_recv_data():
+    try:
+        from simplejson import dumps, encoder
+        encoder.FLOAT_REPR = lambda o: ("%.4f" % o)
+    except ImportError:
+        from json import dumps, encoder
+        encoder.FLOAT_REPR = lambda o: ("%.4f" % o)
+
     dsock = mkdatasock()
     bufsize = struct.calcsize(PACKET_FORMAT)
     version = (2, 5, 0, 0)
