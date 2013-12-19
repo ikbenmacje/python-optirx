@@ -71,8 +71,17 @@ SenderData = namedtuple("SenderData", "appname version natnet_version")
 #  - id (int, 32 bits)
 #  - x,y,z (3 floats, 3x32 bits)
 #  - qx,qy,qz,qw (4 floats, 4x32 bits)
-RBODY_FORMAT =  "=i3f4f"
-RigidBody = namedtuple("RigidBody", "id position orientation markers")
+RIGIDBODY_FORMAT =  "=i3f4f"
+# RigidBody:
+#   id is an integer
+#   position is a triple of coordinates
+#   orientation is a quaternion (qx, qy, qz, qw)
+#   markers is a list of triples
+#   mrk_ids is a list of integers or None (NatNet version < 2.0)
+#   mrk_sizes is a list of floats or None (NatNet version < 2.0)
+#   mrk_mean_error is a float or None (NatNet version < 2.0)
+RigidBody = namedtuple("RigidBody",
+                       "id position orientation markers mrk_ids mrk_sizes mrk_mean_error")
 
 
 # frame payload format (PacketClient.cpp:537) cannot be unpacked by
@@ -99,6 +108,11 @@ RigidBody = namedtuple("RigidBody", "id position orientation markers")
 #  - timecode (int, int),
 #  - end of data tag (int).
 FrameOfData = namedtuple("FrameOfData", "frameno sets other_markers rigid_bodies")
+
+
+def _version_is_at_least(version, major, minor=None):
+    vmajor, vminor = version[:2]
+    return (vmajor > major) or ((vmajor == major) and ((not minor) or (vminor >= minor)))
 
 
 def _unpack_head(head_fmt, data):
@@ -135,8 +149,8 @@ def _unpack_sender(payload, size):
     Return SenderData and the rest of the data."""
     (appname, v1,v2,v3,v4, nv1,nv2,nv3,nv4), data = _unpack_head(SENDER_FORMAT, payload)
     appname = appname.split("\0",1)[0] if appname else ""
-    version = "%d.%d.%d.%d" %(v1,v2,v3,v4)
-    natnet_version = "%d.%d.%d.%d" % (nv1,nv2,nv3,nv4)
+    version = (v1,v2,v3,v4)
+    natnet_version = (nv1,nv2,nv3,nv4)
     return SenderData(appname, version, natnet_version), data
 
 
@@ -151,24 +165,33 @@ def _unpack_markers(data):
     return markers, data
 
 
-def _unpack_rigid_bodies(data):
+def _unpack_rigid_bodies(data, version):
     """Read a sequence of rigid bodies from the head of the data.
     Return a list of RigidBody tuples and the rest of the data."""
     (nbodies,), data = _unpack_head("i", data)
     rbodies = []
     for i in xrange(nbodies):
-        (rbid, x, y, z, qx, qy, qz, qw), data = _unpack_head(RBODY_FORMAT, data)
+        (rbid, x, y, z, qx, qy, qz, qw), data = _unpack_head(RIGIDBODY_FORMAT, data)
         markers, data = _unpack_markers(data)
-        # TODO: unpack marker IDs, marker sizes and marker errors for ver >= 2
+        if _version_is_at_least(version, 2, 0):  # PacketClient.cpp:607
+            nmarkers = len(markers)
+            mrk_ids, data = _unpack_head(str(nmarkers) + "i", data)
+            mrk_sizes, data = _unpack_head(str(nmarkers) + "f", data)
+            (mrk_mean_error,), data = _unpack_head("f", data)
+        else:
+            mrk_ids, mrk_sizes, mrk_mean_error = None, None, None
         rb = RigidBody(id=rbid,
                        position=(x,y,z),
                        orientation=(qx,qy,qz,qw),
-                       markers=markers)
+                       markers=markers,
+                       mrk_ids=mrk_ids,
+                       mrk_sizes=mrk_sizes,
+                       mrk_mean_error=mrk_mean_error)
         rbodies.append(rb)
     return rbodies, data
 
 
-def _unpack_frameofdata(data):
+def _unpack_frameofdata(data, version):
     (frameno, nsets), data = _unpack_head("ii", data)
     # identified marker sets
     sets = {}
@@ -178,7 +201,7 @@ def _unpack_frameofdata(data):
         sets[setname] = markers
     # other (unidentified) markers
     markers, data = _unpack_markers(data)
-    bodies, data = _unpack_rigid_bodies(data)
+    bodies, data = _unpack_rigid_bodies(data, version)
     # TODO: implement rigid bodies, skeletons, etc.
     fod = FrameOfData(frameno=frameno,
                       sets=sets,
@@ -187,8 +210,13 @@ def _unpack_frameofdata(data):
     return fod, data
 
 
-def unpack(data):
-    "Unpack raw NatNet packet data."
+def unpack(data, version=(2, 5, 0, 0)):
+    """Unpack raw NatNet packet data.
+
+    Arguments:
+      data     byte buffer
+      version  version of the NatNet protocol (a tuple of integers)
+    """
     if not data or len(data) < 4:
         return None
     fmt = PACKET_FORMAT
@@ -197,7 +225,7 @@ def unpack(data):
         sender, data = _unpack_sender(data, nbytes)
         return sender
     elif msgtype == NAT_FRAMEOFDATA:
-        frame, data = _unpack_frameofdata(data)
+        frame, data = _unpack_frameofdata(data, version)
         return frame
     else:
         # TODO: implement other message types
@@ -248,13 +276,14 @@ def mkdatasock(ip_address=None, multicast_address=MULTICAST_ADDRESS, port=PORT_D
 def demo_recv_data():
     dsock = mkdatasock()
     bufsize = struct.calcsize(PACKET_FORMAT)
+    version = (2, 5, 0, 0)
     while True:
         data = dsock.recv(bufsize)
-        packet = unpack(data)
+        packet = unpack(data, version=version)
+        if type(packet) is SenderData:
+            version = SenderData.natnet_version
         if type(packet) in [SenderData, FrameOfData]:
             print(dumps(packet.__dict__, namedtuple_as_object=1, indent=4))
-        else:
-            print(packet)
 
 
 if __name__ == "__main__":
