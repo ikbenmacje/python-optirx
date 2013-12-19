@@ -88,6 +88,10 @@ RigidBody = namedtuple("RigidBody",
 Skeleton = namedtuple("Skeleton", "id rigid_bodies")
 
 
+# LabeledMarker (NatNet >= 2.3)
+LabeledMarker = namedtuple("LabeledMarker", "id position size")
+
+
 # frame payload format (PacketClient.cpp:537) cannot be unpacked by
 # struct.unpack, because contains variable-length elements
 #  - frameNumber (int),
@@ -111,7 +115,7 @@ Skeleton = namedtuple("Skeleton", "id rigid_bodies")
 #  - latency (float),
 #  - timecode (int, int),
 #  - end of data tag (int).
-FrameOfData = namedtuple("FrameOfData", "frameno sets other_markers rigid_bodies skeletons")
+FrameOfData = namedtuple("FrameOfData", "frameno sets other_markers rigid_bodies skeletons labeled_markers latency timecode")
 
 
 def _version_is_at_least(version, major, minor=None):
@@ -208,6 +212,17 @@ def _unpack_skeletons(data, version):
     return skels, data
 
 
+def _unpack_labeled_markers(data, version):
+    if not _version_is_at_least(version, 2, 3):
+        return [], data
+    (nmarkers,), data = _unpack_head("i", data)
+    lmarkers = []
+    for i in xrange(nmarkers):
+        (id,x,y,z,size), data = _unpack_head("i4f", data)
+        lmarkers.append(LabeledMarker(id, (x, y, z), size))
+    return lmarkers, data
+
+
 def _unpack_frameofdata(data, version):
     (frameno, nsets), data = _unpack_head("ii", data)
     # identified marker sets
@@ -220,12 +235,17 @@ def _unpack_frameofdata(data, version):
     markers, data = _unpack_markers(data)
     bodies, data = _unpack_rigid_bodies(data, version)
     skels, data = _unpack_skeletons(data, version)
-    # TODO: implement rigid bodies, skeletons, etc.
+    lmarkers, data = _unpack_labeled_markers(data, version)
+    (latency,timecode1,timecode2,eod), data = _unpack_head("fIIi", data)
+    assert eod == 0, "End-of-data marker is not 0."
     fod = FrameOfData(frameno=frameno,
                       sets=sets,
                       other_markers=markers,
                       rigid_bodies=bodies,
-                      skeletons=skels)
+                      skeletons=skels,
+                      labeled_markers=lmarkers,
+                      latency=latency,
+                      timecode=(timecode1, timecode2))
     return fod, data
 
 
@@ -300,9 +320,9 @@ def demo_recv_data():
         data = dsock.recv(bufsize)
         packet = unpack(data, version=version)
         if type(packet) is SenderData:
-            version = SenderData.natnet_version
+            version = packet.natnet_version
         if type(packet) in [SenderData, FrameOfData]:
-            print(dumps(packet.__dict__, namedtuple_as_object=1, indent=4))
+            print(dumps(packet, namedtuple_as_object=1, indent=4))
 
 
 if __name__ == "__main__":
