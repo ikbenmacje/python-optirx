@@ -67,6 +67,14 @@ SENDER_FORMAT =  "=" + ("%ds" % MAX_NAMELENGTH) + "4B4B"
 SenderData = namedtuple("SenderData", "appname version natnet_version")
 
 
+# rigid body payload (PacketClient.cpp:586)
+#  - id (int, 32 bits)
+#  - x,y,z (3 floats, 3x32 bits)
+#  - qx,qy,qz,qw (4 floats, 4x32 bits)
+RBODY_FORMAT =  "=i3f4f"
+RigidBody = namedtuple("RigidBody", "id position orientation markers")
+
+
 # frame payload format (PacketClient.cpp:537) cannot be unpacked by
 # struct.unpack, because contains variable-length elements
 #  - frameNumber (int),
@@ -90,7 +98,7 @@ SenderData = namedtuple("SenderData", "appname version natnet_version")
 #  - latency (float),
 #  - timecode (int, int),
 #  - end of data tag (int).
-FrameOfData = namedtuple("FrameOfData", "frameno sets other_markers")
+FrameOfData = namedtuple("FrameOfData", "frameno sets other_markers rigid_bodies")
 
 
 def _unpack_head(head_fmt, data):
@@ -123,6 +131,8 @@ def _unpack_cstring(data, maxstrlen):
 
 
 def _unpack_sender(payload, size):
+    """Read Sender structure from the head of the data.
+    Return SenderData and the rest of the data."""
     (appname, v1,v2,v3,v4, nv1,nv2,nv3,nv4), data = _unpack_head(SENDER_FORMAT, payload)
     appname = appname.split("\0",1)[0] if appname else ""
     version = "%d.%d.%d.%d" %(v1,v2,v3,v4)
@@ -141,6 +151,23 @@ def _unpack_markers(data):
     return markers, data
 
 
+def _unpack_rigid_bodies(data):
+    """Read a sequence of rigid bodies from the head of the data.
+    Return a list of RigidBody tuples and the rest of the data."""
+    (nbodies,), data = _unpack_head("i", data)
+    rbodies = []
+    for i in xrange(nbodies):
+        (rbid, x, y, z, qx, qy, qz, qw), data = _unpack_head(RBODY_FORMAT, data)
+        markers, data = _unpack_markers(data)
+        # TODO: unpack marker IDs, marker sizes and marker errors for ver >= 2
+        rb = RigidBody(id=rbid,
+                       position=(x,y,z),
+                       orientation=(qx,qy,qz,qw),
+                       markers=markers)
+        rbodies.append(rb)
+    return rbodies, data
+
+
 def _unpack_frameofdata(data):
     (frameno, nsets), data = _unpack_head("ii", data)
     # identified marker sets
@@ -151,8 +178,13 @@ def _unpack_frameofdata(data):
         sets[setname] = markers
     # other (unidentified) markers
     markers, data = _unpack_markers(data)
+    bodies, data = _unpack_rigid_bodies(data)
     # TODO: implement rigid bodies, skeletons, etc.
-    return FrameOfData(frameno=frameno, sets=sets, other_markers=markers), data
+    fod = FrameOfData(frameno=frameno,
+                      sets=sets,
+                      other_markers=markers,
+                      rigid_bodies=bodies)
+    return fod, data
 
 
 def unpack(data):
