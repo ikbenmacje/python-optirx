@@ -84,6 +84,10 @@ RigidBody = namedtuple("RigidBody",
                        "id position orientation markers mrk_ids mrk_sizes mrk_mean_error")
 
 
+# Skeleton (NetNet >= 2.1) is a collection of rigid bodies:
+Skeleton = namedtuple("Skeleton", "id rigid_bodies")
+
+
 # frame payload format (PacketClient.cpp:537) cannot be unpacked by
 # struct.unpack, because contains variable-length elements
 #  - frameNumber (int),
@@ -107,7 +111,7 @@ RigidBody = namedtuple("RigidBody",
 #  - latency (float),
 #  - timecode (int, int),
 #  - end of data tag (int).
-FrameOfData = namedtuple("FrameOfData", "frameno sets other_markers rigid_bodies")
+FrameOfData = namedtuple("FrameOfData", "frameno sets other_markers rigid_bodies skeletons")
 
 
 def _version_is_at_least(version, major, minor=None):
@@ -191,6 +195,19 @@ def _unpack_rigid_bodies(data, version):
     return rbodies, data
 
 
+def _unpack_skeletons(data, version):
+    # not tested
+    if not _version_is_at_least(version, 2, 1):  # PacketClient.cpp:653
+        return [], data
+    (nskels,), data = _unpack_head("i", data)
+    skels = []
+    for i in xrange(nskels):
+        (skelid,), data = _unpack_head("i", data)
+        rbodies, data = _unpack_rigid_bodies(data, version)
+        skels.append(Skeleton(id=id, rigid_bodies=rbodies))
+    return skels, data
+
+
 def _unpack_frameofdata(data, version):
     (frameno, nsets), data = _unpack_head("ii", data)
     # identified marker sets
@@ -202,11 +219,13 @@ def _unpack_frameofdata(data, version):
     # other (unidentified) markers
     markers, data = _unpack_markers(data)
     bodies, data = _unpack_rigid_bodies(data, version)
+    skels, data = _unpack_skeletons(data, version)
     # TODO: implement rigid bodies, skeletons, etc.
     fod = FrameOfData(frameno=frameno,
                       sets=sets,
                       other_markers=markers,
-                      rigid_bodies=bodies)
+                      rigid_bodies=bodies,
+                      skeletons=skels)
     return fod, data
 
 
