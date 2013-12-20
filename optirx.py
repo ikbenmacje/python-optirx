@@ -35,6 +35,11 @@ NAT_TYPES = { NAT_PING: "ping",
               NAT_UNRECOGNIZED_REQUEST: "unrecognized" }
 
 
+DATASET_MARKERSET =           0  # PacketClient.cpp:778
+DATASET_RIGIDBODY =           1  # PacketClient.cpp:800
+DATASET_SKELETON =            2  # PacketClient.cpp:827
+
+
 MAX_NAMELENGTH =              256
 MAX_PAYLOADSIZE =             100000
 MULTICAST_ADDRESS =           "239.255.42.99"     # IANA, local network
@@ -113,6 +118,18 @@ LabeledMarker = namedtuple("LabeledMarker", "id position size")
 FrameOfData = namedtuple("FrameOfData", "frameno sets other_markers rigid_bodies skeletons labeled_markers latency timecode")
 
 
+# type can be one of DATASET_MARKERSET, DATASET_RIGIDBODY, DATASET_SKELETON
+# name is a string (possibly empty)
+# data can be
+#   - a list of strings (names of the markers for a markerset)
+#   - a list of rigid bodies' dictionaries
+ModelDataset = namedtuple("ModelDataset", "type name data")
+
+
+# defs is a list of ModelDataset elements
+ModelDefs = namedtuple("ModelDefs", "datasets")
+
+
 def _version_is_at_least(version, major, minor=None):
     vmajor, vminor = version[:2]
     return (vmajor > major) or ((vmajor == major) and ((not minor) or (vminor >= minor)))
@@ -157,7 +174,7 @@ def _unpack_sender(payload, size):
     return SenderData(appname, version, natnet_version), data
 
 
-def _unpack_markers(data):
+def _unpack_markers(data, version):
     """Read a sequence of markers from the head of the data.
     Return a list of coordinate triples and the rest of the data."""
     (nmarkers,), data = _unpack_head("i", data)
@@ -175,7 +192,7 @@ def _unpack_rigid_bodies(data, version):
     rbodies = []
     for i in xrange(nbodies):
         (rbid, x, y, z, qx, qy, qz, qw), data = _unpack_head(RIGIDBODY_FORMAT, data)
-        markers, data = _unpack_markers(data)
+        markers, data = _unpack_markers(data, version)
         if _version_is_at_least(version, 2, 0):  # PacketClient.cpp:607
             nmarkers = len(markers)
             mrk_ids, data = _unpack_head(str(nmarkers) + "i", data)
@@ -224,10 +241,10 @@ def _unpack_frameofdata(data, version):
     sets = {}
     for i in xrange(nsets):
         setname, data = _unpack_cstring(data, MAX_NAMELENGTH)
-        markers, data = _unpack_markers(data)
+        markers, data = _unpack_markers(data, version)
         sets[setname] = markers
     # other (unidentified) markers
-    markers, data = _unpack_markers(data)
+    markers, data = _unpack_markers(data, version)
     bodies, data = _unpack_rigid_bodies(data, version)
     skels, data = _unpack_skeletons(data, version)
     lmarkers, data = _unpack_labeled_markers(data, version)
@@ -242,6 +259,55 @@ def _unpack_frameofdata(data, version):
                       latency=latency,
                       timecode=(timecode1, timecode2))
     return fod, data
+
+
+def _unpack_modeldef(data, version):
+    """Return ModelDefs and the rest of the data.
+    """
+    # PacketClient.cpp:765
+    (ndatasets,), data = _unpack_head("i", data)
+    datasets = []
+    for i in xrange(ndatasets):
+        (dtype,), data = _unpack_head("i", data)
+        if dtype == DATASET_MARKERSET:
+            name, data = _unpack_cstring(data, MAX_NAMELENGTH)
+            (nmarkers,), data = _unpack_head("i", data)
+            mrk_names = []
+            for j in xrange(nMarkers):
+                mrk_name, data = _unpack_cstring(data, MAX_NAMELENGTH)
+                mrk_names.append(mrk_name)
+            dset = ModelDataset(DATASET_MARKERSET, name, mrk_names)
+            datasets.append(dset)
+        elif dtype == DATASET_RIGIDBODY:
+            if _version_is_at_least(version, 2, 0):
+                name, data = _unpack_cstring(data, MAX_NAMELENGTH)
+            else:
+                name = ""
+            (rbid, parent, xoff, yoff, zoff), data = _unpack_head("2i3f", data)
+            dset = ModelDataset(DATASET_RIGIDBODY, name,
+                            [{"id": rbid,
+                              "parent": parent,
+                              "offset": (xoff, yoff, zoff)}])
+            datasets.append(dset)
+        elif dtype == DATASET_SKELETON:
+            name, data = _unpack_cstring(data, MAX_NAMELENGTH)
+            (skid, nbodies), data = _unpack_head("2i", data)
+            bodies = []
+            for j in xrange(nbodies):
+                if _version_is_at_least(version, 2, 0):
+                    bname, data = _unpack_cstring(data, MAX_NAMELENGTH)
+                else:
+                    bname = ""
+                (rbid, parent, xoff, yoff, zoff), data = _unpack_head("2i3f", data)
+                body = {"id": rbid,
+                        "parent": parent,
+                        "offset": (xoff, yoff, zoff)}
+                bodies.append(body)
+            dset = ModelDataset(DATASET_RIGIDBODY, name, bodies)
+            datasets.append(dset)
+        else:
+            raise NotImplementedError("dataset type " + str(dtype))
+    return ModelDefs(datasets), data
 
 
 def unpack(data, version=(2, 5, 0, 0)):
@@ -261,6 +327,9 @@ def unpack(data, version=(2, 5, 0, 0)):
     elif msgtype == NAT_FRAMEOFDATA:
         frame, data = _unpack_frameofdata(data, version)
         return frame
+    elif msgtype == NAT_MODELDEF:
+        modeldef, data = _unpack_modeldef(data, version)
+        return modeldef
     else:
         # TODO: implement other message types
         raise NotImplementedError("packet type " + str(NAT_TYPES.get(msgtype, msgtype)))
@@ -322,7 +391,7 @@ def demo_recv_data():
         packet = unpack(data, version=version)
         if type(packet) is SenderData:
             version = packet.natnet_version
-        if type(packet) in [SenderData, FrameOfData]:
+        if type(packet) in [SenderData, ModelDefs, FrameOfData]:
             print(dumps(packet, namedtuple_as_object=1, indent=4))
 
 
