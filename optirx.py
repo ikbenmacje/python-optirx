@@ -438,6 +438,7 @@ def demo_recv_data():
         packet = unpack(data, version=version)
         if type(packet) is SenderData:
             version = packet.natnet_version
+            print("NatNet version received:", version)
         if type(packet) in [SenderData, ModelDefs, FrameOfData]:
             print(dumps(packet, namedtuple_as_object=1, indent=4))
 
