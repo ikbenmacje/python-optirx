@@ -8,6 +8,7 @@ except ImportError:
 
 from platform import python_version_tuple
 import re
+from optirx import __version__
 
 
 LICENSE = open("LICENSE").read()
@@ -22,7 +23,7 @@ if python_version_tuple()[:2] >= ('2', '7'):
 
 
 setup(name='optirx',
-      version='0.2',
+      version=__version__,
       description='A pure Python library to receive motion capture data from OptiTrack Streaming Engine',
       long_description=LONG_DESCRIPTION,
       author='Sergey Astanin',
