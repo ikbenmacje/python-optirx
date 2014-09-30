@@ -28,7 +28,7 @@ import optirx as rx
 
 
 def test_unpack_sender_data():
-    with open("test/data/frame-000.bin", "rb") as f:
+    with open("test/data/frame-motive-1.5.0-000.bin", "rb") as f:
         binary = f.read()
         parsed = rx.unpack(binary)
         expected = rx.SenderData(appname=b"NatNetLib",
@@ -51,7 +51,7 @@ def test_unpack_frame_of_data():
         (-0.11109362542629242, 0.1273186355829239, 1.2400494813919067)]
 
     for i in range(1,1+2):
-        with open("test/data/frame-%03d.bin" % i, "rb") as f:
+        with open("test/data/frame-motive-1.5.0-%03d.bin" % i, "rb") as f:
             binary = f.read()
             parsed = rx.unpack(binary)
             assert_is(type(parsed), rx.FrameOfData)
