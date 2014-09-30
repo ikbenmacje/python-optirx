@@ -292,6 +292,7 @@ def _unpack_frameofdata(data, version):
                 "fII", data)
         is_recording = None
         tracked_models_changed = None
+        timestamp = None
     (eod,), data = _unpack_head("i", data)
     assert eod == 0, "End-of-data marker is not 0."
     fod = FrameOfData(frameno=frameno,
