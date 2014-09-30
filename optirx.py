@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""A pure Python library to receive motion capture data from OptiTrack.
+"""
+
 from __future__ import print_function
 
 
