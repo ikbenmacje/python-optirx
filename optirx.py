@@ -168,7 +168,7 @@ def _unpack_cstring(data, maxstrlen):
     databuf = data[:maxstrlen]
     databuflen = min(len(databuf), maxstrlen)
     (strbuf,) = struct.unpack("%ds" % databuflen, databuf)
-    s = strbuf.split("\0", 1)[0]
+    s = strbuf.split(b"\0", 1)[0]
     sz = len(s) + 1
     return s, data[sz:]
 
@@ -177,7 +177,7 @@ def _unpack_sender(payload, size):
     """Read Sender structure from the head of the data.
     Return SenderData and the rest of the data."""
     (appname, v1,v2,v3,v4, nv1,nv2,nv3,nv4), data = _unpack_head(SENDER_FORMAT, payload)
-    appname = appname.split("\0",1)[0] if appname else ""
+    appname = appname.split(b"\0",1)[0] if appname else ""
     version = (v1,v2,v3,v4)
     natnet_version = (nv1,nv2,nv3,nv4)
     return SenderData(appname, version, natnet_version), data
