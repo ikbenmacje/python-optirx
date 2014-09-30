@@ -7,6 +7,7 @@ except ImportError:
 
 
 from platform import python_version_tuple
+import re
 
 
 LICENSE = open("LICENSE").read()
@@ -14,6 +15,10 @@ LICENSE = open("LICENSE").read()
 
 # strip links from the descripton on the PyPI
 LONG_DESCRIPTION = open("README.rst").read().replace("`_", "`")
+# strip build Status from the PyPI package
+if python_version_tuple()[:2] >= ('2', '7'):
+    LONG_DESCRIPTION = re.sub("^Build Status\n(.*\n){7}", "",
+                              LONG_DESCRIPTION, flags=re.M)
 
 
 setup(name='optirx',

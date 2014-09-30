@@ -19,6 +19,14 @@ Compatibility
 Tracking Tools 2.5.0, Motive 1.5.0.
 
 
+Build Status
+------------
+
+.. image:: https://drone.io/bitbucket.org/astanin/python-optirx/status.png
+   :alt: build status
+   :target: https://drone.io/bitbucket.org/astanin/python-optirx/latest
+
+
 Usage
 -----
 
