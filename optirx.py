@@ -463,7 +463,7 @@ def demo_recv_data():
             version = packet.natnet_version
             print("NatNet version received:", version)
         if type(packet) in [SenderData, ModelDefs, FrameOfData]:
-            print(dumps(packet, namedtuple_as_object=1, indent=4))
+            print(dumps(packet._asdict(), indent=4))
 
 
 if __name__ == "__main__":
