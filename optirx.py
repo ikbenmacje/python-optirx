@@ -208,7 +208,7 @@ def _unpack_rigid_bodies(data, version):
             mrk_sizes, data = _unpack_head(str(nmarkers) + "f", data)
             (mrk_mean_error,), data = _unpack_head("f", data)
             tracking_valid = None
-            if _version_is_at_least(version, 2, 6):
+            if _version_is_at_least(version, 2, 6): # PacketClient.cpp:622
                 #New in version 2.6 is support for telling if the rigid body
                 #was successfully tracked
                 (params,), data = _unpack_head("h", data)
@@ -242,11 +242,11 @@ def _unpack_skeletons(data, version):
 
 
 def _unpack_labeled_markers(data, version):
-    if not _version_is_at_least(version, 2, 3):
+    if not _version_is_at_least(version, 2, 3): # PacketClient.cpp:734
         return [], data
     (nmarkers,), data = _unpack_head("i", data)
     lmarkers = []
-    if _version_is_at_least(version, 2, 6):
+    if _version_is_at_least(version, 2, 6): # PacketClient.cpp:753
         #Duplicate looping code to avoid an if check every
         #loop iteration
         for _ in xrange(nmarkers):
@@ -278,7 +278,7 @@ def _unpack_frameofdata(data, version):
     bodies, data = _unpack_rigid_bodies(data, version)
     skels, data = _unpack_skeletons(data, version)
     lmarkers, data = _unpack_labeled_markers(data, version)
-    if _version_is_at_least(version, 2, 6):
+    if _version_is_at_least(version, 2, 6): # PacketClient.cpp:779
         # In the latest version of PacketClient.cpp several new parameters
         # have been added at the end with no version checking, since version
         # 2.5 did not have these parameters the code here have been added in
