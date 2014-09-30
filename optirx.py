@@ -148,8 +148,8 @@ def _unpack_head(head_fmt, data):
     """Unpack some bytes at the head of the data.
     Return unpacked values and the rest of the data.
 
-    >>> _unpack_head('>h', '\2\0_therest')
-    ((512,), '_therest')
+    >>> _unpack_head('>h', b'\2\1_therest')
+    ((513,), '_therest')
 
     """
     sz = struct.calcsize(head_fmt)
@@ -161,7 +161,7 @@ def _unpack_cstring(data, maxstrlen):
     """"Read a null-terminated string from the head of the data.
     Return the string and the rest of the data.
 
-    >>> _unpack_cstring("abc\0foobar", 6)
+    >>> _unpack_cstring("abc%cfoobar" % 0, 6)
     ('abc', 'foobar')
 
     """
