@@ -28,15 +28,20 @@ import optirx as rx
 
 
 def test_unpack_sender_data():
-    with open("test/data/frame-motive-1.5.0-000.bin", "rb") as f:
-        binary = f.read()
-        parsed = rx.unpack(binary)
-        expected = rx.SenderData(appname=b"NatNetLib",
-                                 version=(2,5,0,0),
-                                 natnet_version=(2,5,0,0))
-        print("parsed:\n",parsed)
-        print("expected:\n",expected)
-        assert_equal(parsed, expected)
+    files = ["test/data/frame-motive-1.5.0-000.bin",
+             "test/data/frame-motive-1.6b2-000.bin"]
+    versions = [(2,5,0,0), (2,6,0,0)]
+
+    for fname, version in zip(files, versions):
+        with open(fname, "rb") as f:
+            binary = f.read()
+            parsed = rx.unpack(binary)
+            expected = rx.SenderData(appname=b"NatNetLib",
+                                     version=version,
+                                     natnet_version=version)
+            print("parsed:\n",parsed)
+            print("expected:\n",expected)
+            assert_equal(parsed, expected)
 
 
 def test_unpack_frame_of_data():
