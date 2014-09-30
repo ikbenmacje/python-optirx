@@ -17,6 +17,17 @@ else:
     xrange = range
 
 
+__version__ = "0.2"
+__all__ = [
+    # constants:
+    'MAX_PACKETSIZE',
+    # packet types:
+    'SenderData', 'FrameOfData', 'ModelDefs',
+    # payload types:
+    'RigidBody', 'Skeleton', 'LabeledMarker', 'ModelDataset',
+    # functions:
+    'mkcmdsock', 'mkdatasock', 'unpack']
+
 
 ###
 ### Some constants as defined in NatNet SDK example ###
