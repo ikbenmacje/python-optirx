@@ -43,6 +43,7 @@ Alternatives
 
 - use VRPN streaming protocol.
 - use Matlab or Microsoft toolchains.
+- use PyNatNet and NatNet SDK
 
 
 License
