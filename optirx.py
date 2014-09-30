@@ -212,7 +212,7 @@ def _unpack_rigid_bodies(data, version):
                 #New in version 2.6 is support for telling if the rigid body
                 #was successfully tracked
                 (params,), data = _unpack_head("h", data)
-                tracking_valid = params & 0x01
+                tracking_valid = params & 0x01 == 1
         else:
             mrk_ids, mrk_sizes, mrk_mean_error = None, None, None
             tracking_valid = None
@@ -252,9 +252,9 @@ def _unpack_labeled_markers(data, version):
         for _ in xrange(nmarkers):
             (id, x, y, z, size, params), data = _unpack_head("i4fh", data)
             #New in version 2.6, PacketClient.cpp 753
-            occluded = params & 0x01
-            pc_solved = params & 0x02
-            model_solved = params & 0x04
+            occluded = params & 0x01 == 1
+            pc_solved = params & 0x02 == 2
+            model_solved = params & 0x04 == 4
             lmarkers.append(LabeledMarker(id, (x, y, z), size, occluded,
                 pc_solved, model_solved))
     else:
@@ -285,8 +285,8 @@ def _unpack_frameofdata(data, version):
         # an if statement
         (latency, timecode, timecode_sub, timestamp, params), data = _unpack_head(
                 "fIIfh", data)
-        is_recording = params & 0x01
-        tracked_models_changed = params & 0x02
+        is_recording = params & 0x01 == 1
+        tracked_models_changed = params & 0x02 == 2
     else:
         (latency, timecode, timecode_sub), data = _unpack_head(
                 "fII", data)
