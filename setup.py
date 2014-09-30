@@ -22,7 +22,7 @@ if python_version_tuple()[:2] >= ('2', '7'):
 
 
 setup(name='optirx',
-      version='0.1',
+      version='0.2',
       description='A pure Python library to receive motion capture data from OptiTrack Streaming Engine',
       long_description=LONG_DESCRIPTION,
       author='Sergey Astanin',
@@ -33,5 +33,8 @@ setup(name='optirx',
                      "License :: OSI Approved :: MIT License",
                      "Operating System :: OS Independent",
                      "Programming Language :: Python :: 2.7",
+                     "Programming Language :: Python :: 3.2",
+                     "Programming Language :: Python :: 3.3",
+                     "Programming Language :: Python :: 3.4",
                      "Topic :: Software Development :: Libraries" ],
       py_modules = ['optirx'])
