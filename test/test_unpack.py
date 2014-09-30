@@ -1,3 +1,4 @@
+from __future__ import print_function
 from nose.tools import assert_equal, assert_in, assert_is
 
 
@@ -30,9 +31,11 @@ def test_unpack_sender_data():
     with open("test/data/frame-000.bin", "rb") as f:
         binary = f.read()
         parsed = rx.unpack(binary)
-        expected = rx.SenderData(appname="NatNetLib",
+        expected = rx.SenderData(appname=b"NatNetLib",
                                  version=(2,5,0,0),
                                  natnet_version=(2,5,0,0))
+        print("parsed:\n",parsed)
+        print("expected:\n",expected)
         assert_equal(parsed, expected)
 
 
@@ -53,9 +56,9 @@ def test_unpack_frame_of_data():
             parsed = rx.unpack(binary)
             assert_is(type(parsed), rx.FrameOfData)
             assert_in(parsed.frameno, [92881, 92882])
-            assert_in("all", parsed.sets)
-            assert_in("Rigid Body 1", parsed.sets)
-            assert_almost_equal(parsed.sets["Rigid Body 1"], expected_rb, 4)
+            assert_in(b"all", parsed.sets)
+            assert_in(b"Rigid Body 1", parsed.sets)
+            assert_almost_equal(parsed.sets[b"Rigid Body 1"], expected_rb, 4)
             assert_equal(parsed.rigid_bodies[0].mrk_ids, (1,2,3))
             assert_equal(len(parsed.other_markers), 2)
             assert_almost_equal(parsed.other_markers, expected_om, 3)
