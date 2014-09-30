@@ -55,7 +55,8 @@ SOCKET_BUFSIZE = 0x100000
 #  - iMessage (unsigned short),
 #  - nDataBytes (unsigned short),
 #  - union of possible payloads (MAX_PAYLOADSIZE bytes)
-PACKET_FORMAT =  "=" + "2H" + ("%dB" % MAX_PAYLOADSIZE)
+PACKET_HEADER_FORMAT = "=2H"
+PACKET_FORMAT = PACKET_HEADER_FORMAT + ("%dB" % MAX_PAYLOADSIZE)
 MAX_PACKETSIZE = struct.calcsize(PACKET_FORMAT)
 
 
@@ -319,8 +320,7 @@ def unpack(data, version=(2, 5, 0, 0)):
     """
     if not data or len(data) < 4:
         return None
-    fmt = PACKET_FORMAT
-    (msgtype, nbytes), data = _unpack_head(fmt[:4], data)
+    (msgtype, nbytes), data = _unpack_head(PACKET_HEADER_FORMAT, data)
     if msgtype == NAT_PINGRESPONSE:
         sender, data = _unpack_sender(data, nbytes)
         return sender
