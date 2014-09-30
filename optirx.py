@@ -5,6 +5,14 @@ from __future__ import print_function
 import socket
 import struct
 from collections import namedtuple
+from platform import python_version_tuple
+
+
+if python_version_tuple()[0] < "3":
+    pass
+else:
+    xrange = range
+
 
 
 ###
