@@ -12,11 +12,18 @@ cannot be used with free toolchains (GCC, Clang). OptiRX is based on
 the direct depacketization example from the SDK and does not use
 NatNet SDK.
 
+Install
+-------
+
+::
+
+    pip install optirx
+
 
 Compatibility
 -------------
 
-Tracking Tools 2.5.0, Motive 1.5.0.
+Tracking Tools 2.5.0, Motive 1.5.0, 1.5.1, 1.6 Beta 2.
 
 
 Build Status
