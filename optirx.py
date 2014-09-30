@@ -283,7 +283,7 @@ def _unpack_labeled_markers(data, version):
     else:
         for _ in xrange(nmarkers):
             (id, x, y, z, size), data = _unpack_head("i4f", data)
-            lmarkers.append(LabeledMarker(id, (x, y, z), size, 
+            lmarkers.append(LabeledMarker(id, (x, y, z), size,
                 None, None, None))
     return lmarkers, data
 
