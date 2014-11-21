@@ -278,7 +278,13 @@ def _unpack_frameofdata(data, version):
     bodies, data = _unpack_rigid_bodies(data, version)
     skels, data = _unpack_skeletons(data, version)
     lmarkers, data = _unpack_labeled_markers(data, version)
-    if _version_is_at_least(version, 2, 6): # PacketClient.cpp:779
+    if _version_is_at_least(version, 2, 7):
+        # In version 2.7, the timestamp was changed from float to double
+        (latency, timecode, timecode_sub, timestamp, params), data = _unpack_head("!fIIdh", data)
+        # '!' because of padding
+        is_recording = params & 0x01 == 1
+        tracked_models_changed = params & 0x02 == 2
+    elif _version_is_at_least(version, 2, 6): # PacketClient.cpp:779
         # In the latest version of PacketClient.cpp several new parameters
         # have been added at the end with no version checking, since version
         # 2.5 did not have these parameters the code here have been added in
