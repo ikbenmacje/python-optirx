@@ -1,5 +1,5 @@
 //=============================================================================
-// Copyright © 2010 NaturalPoint, Inc. All Rights Reserved.
+// Copyright © 2014 NaturalPoint, Inc. All Rights Reserved.
 // 
 // This software is provided by the copyright holders and contributors "as is" and
 // any express or implied warranties, including, but not limited to, the implied
@@ -84,7 +84,7 @@ int GetLocalIPAddresses(unsigned long Addresses[], int nMax);
 
 #define MULTICAST_ADDRESS		"239.255.42.99"     // IANA, local network
 #define PORT_COMMAND            1510
-#define PORT_DATA  			    1511                // Default multicast group
+#define PORT_DATA  			    1511                
 
 SOCKET CommandSocket;
 SOCKET DataSocket;
@@ -413,7 +413,7 @@ int main(int argc, char* argv[])
                 if(iRet != SOCKET_ERROR)
                     break;
             }
-            break;	
+            break;
         case 'q':
             bExit = true;		
             break;	
@@ -646,8 +646,15 @@ void Unpack(char* pData)
                 printf("Mean marker error: %3.2f\n", fError);
             }
 
+            // 2.6 and later
+            if( ((major == 2)&&(minor >= 6)) || (major > 2) || (major == 0) ) 
+            {
+                // params
+                short params = 0; memcpy(&params, ptr, 2); ptr += 2;
+                bool bTrackingValid = params & 0x01; // 0x01 : rigid body was successfully tracked in this frame
+            }
             
-	    } // next rigid body
+        } // next rigid body
 
 
         // skeletons (version 2.1 and later)
@@ -741,6 +748,16 @@ void Unpack(char* pData)
 				// size
 				float size = 0.0f; memcpy(&size, ptr, 4); ptr += 4;
 
+                // 2.6 and later
+                if( ((major == 2)&&(minor >= 6)) || (major > 2) || (major == 0) ) 
+                {
+                    // marker params
+                    short params = 0; memcpy(&params, ptr, 2); ptr += 2;
+                    bool bOccluded = params & 0x01;     // marker was not visible (occluded) in this frame
+                    bool bPCSolved = params & 0x02;     // position provided by point cloud solve
+                    bool bModelSolved = params & 0x04;  // position provided by model solve
+                }
+
 				printf("ID  : %d\n", ID);
 				printf("pos : [%3.2f,%3.2f,%3.2f]\n", x,y,z);
 				printf("size: [%3.2f]\n", size);
@@ -756,6 +773,26 @@ void Unpack(char* pData)
 		unsigned int timecodeSub = 0; memcpy(&timecodeSub, ptr, 4); ptr += 4;
 		char szTimecode[128] = "";
 		TimecodeStringify(timecode, timecodeSub, szTimecode, 128);
+
+        // timestamp
+        double timestamp = 0.0f;
+        // 2.7 and later - increased from single to double precision
+        if( ((major == 2)&&(minor>=7)) || (major>2))
+        {
+            memcpy(&timestamp, ptr, 8); ptr += 8;
+        }
+        else
+        {
+            float fTemp = 0.0f;
+            memcpy(&fTemp, ptr, 4); ptr += 4;
+            timestamp = (double)fTemp;
+        }
+
+        // frame params
+        short params = 0;  memcpy(&params, ptr, 2); ptr += 2;
+        bool bIsRecording = params & 0x01;                  // 0x01 Motive is recording
+        bool bTrackedModelsChanged = params & 0x02;         // 0x02 Actively tracked model list has changed
+
 
 		// end of data tag
         int eod = 0; memcpy(&eod, ptr, 4); ptr += 4;
