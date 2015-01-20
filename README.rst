@@ -12,11 +12,18 @@ cannot be used with free toolchains (GCC, Clang). OptiRX is based on
 the direct depacketization example from the SDK and does not use
 NatNet SDK.
 
+Install
+-------
+
+::
+
+    pip install optirx
+
 
 Compatibility
 -------------
 
-Tracking Tools 2.5.0, Motive 1.5.0.
+Tracking Tools 2.5.0; Motive 1.5.x (NatNet 2.5.0.0), 1.7.x (NatNet 2.7.0.0).
 
 
 Build Status
@@ -37,7 +44,7 @@ receives and prints all data frames::
     import optirx as rx
 
     dsock = rx.mkdatasock()
-    version = (2, 5, 0, 0)  # NatNet version to use
+    version = (2, 7, 0, 0)  # NatNet version to use
     while True:
         data = dsock.recv(rx.MAX_PACKETSIZE)
         packet = rx.unpack(data, version=version)

@@ -283,7 +283,7 @@ def _unpack_labeled_markers(data, version):
     else:
         for _ in xrange(nmarkers):
             (id, x, y, z, size), data = _unpack_head("i4f", data)
-            lmarkers.append(LabeledMarker(id, (x, y, z), size, 
+            lmarkers.append(LabeledMarker(id, (x, y, z), size,
                 None, None, None))
     return lmarkers, data
 
@@ -446,31 +446,3 @@ def mkdatasock(ip_address=None, multicast_address=MULTICAST_ADDRESS, port=PORT_D
     datasock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, SOCKET_BUFSIZE)
     return datasock
 
-
-###
-### Demo mode: connect to Optitrack on the same machine, print recieved data.
-###
-
-
-def demo_recv_data():
-    try:
-        from simplejson import dumps, encoder
-        encoder.FLOAT_REPR = lambda o: ("%.4f" % o)
-    except ImportError:
-        from json import dumps, encoder
-        encoder.FLOAT_REPR = lambda o: ("%.4f" % o)
-
-    dsock = mkdatasock()
-    version = (2, 5, 0, 0)
-    while True:
-        data = dsock.recv(MAX_PACKETSIZE)
-        packet = unpack(data, version=version)
-        if type(packet) is SenderData:
-            version = packet.natnet_version
-            print("NatNet version received:", version)
-        if type(packet) in [SenderData, ModelDefs, FrameOfData]:
-            print(dumps(packet, namedtuple_as_object=1, indent=4))
-
-
-if __name__ == "__main__":
-    demo_recv_data()
