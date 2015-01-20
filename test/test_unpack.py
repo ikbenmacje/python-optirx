@@ -29,8 +29,8 @@ import optirx as rx
 
 def test_unpack_sender_data_all_versions():
     files = ["test/data/frame-motive-1.5.0-000.bin",
-             "test/data/frame-motive-1.6b2-000.bin"]
-    versions = [(2,5,0,0), (2,6,0,0)]
+             "test/data/frame-motive-1.7.2-000.bin"]
+    versions = [(2,5,0,0), (2,7,0,0)]
 
     for fname, version in zip(files, versions):
         with open(fname, "rb") as f:
@@ -71,26 +71,24 @@ def test_unpack_frame_of_data_natnet2500():
             assert_equal(len(parsed.labeled_markers), 3)
 
 
-def test_unpack_frame_of_data_natnet2600():
+def test_unpack_frame_of_data_natnet2700():
 
-    # FIXME
     expected_rb = [
-        (-0.3015673756599426, 0.08478303998708725, 1.1143304109573364),
-        (-0.23079043626785278, 0.04755447059869766, 1.1353150606155396),
-        (-0.25711703300476074, -0.014958729967474937, 1.1209092140197754)]
+        (-0.053690, 0.099419, -1.398518),
+        ( 0.047905, 0.115714, -1.436263),
+        ( 0.023839, 0.072290, -1.388070)]
 
-    # FIXME
     expected_om = [
-        (-0.24560749530792236, 0.1687806248664856, 1.2753326892852783),
-        (-0.11109362542629242, 0.1273186355829239, 1.2400494813919067)]
+        (-0.254053, 0.055445, -1.432309),
+        (-0.281266, 0.049510, -1.421349)]
 
     for i in range(1,1+2):
-        with open("test/data/frame-motive-1.6b2-%03d.bin" % i, "rb") as f:
+        with open("test/data/frame-motive-1.7.2-%03d.bin" % i, "rb") as f:
             binary = f.read()
-            parsed = rx.unpack(binary)
+            parsed = rx.unpack(binary, (2,7,0,0))
             print(parsed)
             assert_is(type(parsed), rx.FrameOfData)
-            assert_in(parsed.frameno, [92881, 92882]) # FIXME
+            assert_in(parsed.frameno, [411213, 411214, 411215])
             assert_in(b"all", parsed.sets)
             assert_in(b"Rigid Body 1", parsed.sets)
             assert_almost_equal(parsed.sets[b"Rigid Body 1"], expected_rb, 4)
@@ -99,3 +97,4 @@ def test_unpack_frame_of_data_natnet2600():
             assert_almost_equal(parsed.other_markers, expected_om, 3)
             assert_equal(parsed.skeletons, [])
             assert_equal(len(parsed.labeled_markers), 3)
+
