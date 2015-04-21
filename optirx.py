@@ -143,7 +143,7 @@ LabeledMarker = namedtuple("LabeledMarker", "id position size occluded point_clo
 #  - LABELED_MARKERS (...), ver >= 2.3
 #  - latency (float),
 #  - timecode (int, int),
-#  - timestamp (float), version >= 2.6(?),
+#  - timestamp (double), version >= 2.6(?),
 #  - is_recording (boolean), version >= 2.6(?),
 #  - tracked_models_changed (boolean), version >= 2.6(?),
 #  - end of data tag (int).
@@ -303,7 +303,7 @@ def _unpack_frameofdata(data, version):
     lmarkers, data = _unpack_labeled_markers(data, version)
     if _version_is_at_least(version, 2, 7):
         # In version 2.7, the timestamp was changed from float to double
-        (latency, timecode, timecode_sub, timestamp, params), data = _unpack_head("!fIIdh", data)
+        (latency, timecode, timecode_sub, timestamp, params), data = _unpack_head("=fIIdh", data)
         # '!' because of padding
         is_recording = params & 0x01 == 1
         tracked_models_changed = params & 0x02 == 2
@@ -437,6 +437,7 @@ def mkcmdsock(ip_address=None, port=0):
 def mkdatasock(ip_address=None, multicast_address=MULTICAST_ADDRESS, port=PORT_DATA):
     "Create a data socket."
     ip_address = gethostip() if not ip_address else ip_address
+    #~ print(ip_address)
     datasock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
     datasock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     datasock.bind((ip_address, port))
