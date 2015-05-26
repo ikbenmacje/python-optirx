@@ -98,3 +98,5 @@ def test_unpack_frame_of_data_natnet2700():
             assert_equal(parsed.skeletons, [])
             assert_equal(len(parsed.labeled_markers), 3)
 
+
+# TODO: create a test with latency and timestamp data
