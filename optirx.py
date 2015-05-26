@@ -437,7 +437,6 @@ def mkcmdsock(ip_address=None, port=0):
 def mkdatasock(ip_address=None, multicast_address=MULTICAST_ADDRESS, port=PORT_DATA):
     "Create a data socket."
     ip_address = gethostip() if not ip_address else ip_address
-    #~ print(ip_address)
     datasock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
     datasock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     datasock.bind((ip_address, port))
