@@ -289,7 +289,7 @@ def _unpack_labeled_markers(data, version):
 
 
 def _unpack_force_plates(data, version):
-    if not _version_is_at_least(version, 2, 9): # PacketClient-1.9.cpp:859
+    if not _version_is_at_least(version, 2, 9): # PacketClient-2.9.cpp:859
         return [], data
     # not tested, this is just here to parse the packet format
     (nplates,), data = _unpack_head("i", data)
