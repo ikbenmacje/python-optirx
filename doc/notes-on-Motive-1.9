@@ -1,0 +1,19 @@
+2016-01-14
+
+The current version of Motive is 1.9.0.
+The current version of the NatNet SDK is 2.9.0 (10/11/2015).
+
+Some of the differences apparent from the source code for PacketClient.cpp in
+2.9.0 from the version previously included in this package:
+
+Lines  98-101: new global variables
+Lines 146-159: new reporting of command responses in global variables
+Lines 430-453: new interactive playback control commands for 'w' key
+Lines 465-509: new SendCommand function called from lines 430-453
+Lines 796-809: addition of tracking flags to rigid markers (since 2.6)
+Lines 859-887: addition of force plate data (no way to test this) (since 2.9)
+
+The rigid marker tracking flags are already supported in optirx._unpack_rigid_bodies().
+
+The chief addition for NatNet 2.9 appears to be the force plate data, which adds
+another header to the frame data processed in optirx._unpack_frameofdata().
