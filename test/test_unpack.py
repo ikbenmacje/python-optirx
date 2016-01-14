@@ -29,8 +29,9 @@ import optirx as rx
 
 def test_unpack_sender_data_all_versions():
     files = ["test/data/frame-motive-1.5.0-000.bin",
-             "test/data/frame-motive-1.7.2-000.bin"]
-    versions = [(2,5,0,0), (2,7,0,0)]
+             "test/data/frame-motive-1.7.2-000.bin",
+             "test/data/frame-motive-1.9.0-000.bin" ]
+    versions = [(2,5,0,0), (2,7,0,0), (2,9,0,0) ]
 
     for fname, version in zip(files, versions):
         with open(fname, "rb") as f:
@@ -101,28 +102,24 @@ def test_unpack_frame_of_data_natnet2700():
 def test_unpack_frame_of_data_natnet2900():
 
     expected_rb = [
-        (-0.309438, 0.311235,  0.201755),
-        (-0.202528, 0.266192,  0.364530),
-        (-0.197157, 0.263633,  0.114435) ]
+        ( 0.344206, 0.015133, 0.150544), 
+        ( 0.193836, 0.015162, 0.155252), 
+        ( 0.200077, 0.016285, 0.355402) ]
 
-    expected_om = [
-        ( 3.146829, 2.173529,  0.359759)]
-
-    for i in range(1,1+1):
+    for i in range(1,1+2):
         with open("test/data/frame-motive-1.9.0-%03d.bin" % i, "rb") as f:
             binary = f.read()
             parsed = rx.unpack(binary, (2,9,0,0))
             print(parsed)
             assert_is(type(parsed), rx.FrameOfData)
-            assert_in(parsed.frameno, [9764967, 9764968])
+            assert_in(parsed.frameno, [11823217, 11823218])
             assert_in(b"all", parsed.sets)
             assert_in(b"Triangle", parsed.sets)
             assert_almost_equal(parsed.sets[b"Triangle"], expected_rb, 4)
             assert_equal(parsed.rigid_bodies[0].mrk_ids, (1,2,3))
-            assert_equal(len(parsed.other_markers), 1)
-            assert_almost_equal(parsed.other_markers, expected_om, 1)
+            assert_equal(len(parsed.other_markers), 0)
             assert_equal(parsed.skeletons, [])
-            assert_equal(len(parsed.labeled_markers), 4)
+            assert_equal(len(parsed.labeled_markers), 3)
 
 
 
