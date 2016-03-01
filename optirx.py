@@ -260,7 +260,7 @@ def _unpack_skeletons(data, version):
     for i in xrange(nskels):
         (skelid,), data = _unpack_head("i", data)
         rbodies, data = _unpack_rigid_bodies(data, version)
-        skels.append(Skeleton(id=id, rigid_bodies=rbodies))
+        skels.append(Skeleton(id=skelid, rigid_bodies=rbodies))
     return skels, data
 
 
@@ -458,4 +458,3 @@ def mkdatasock(ip_address=None, multicast_address=MULTICAST_ADDRESS, port=PORT_D
     datasock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
     datasock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, SOCKET_BUFSIZE)
     return datasock
-
