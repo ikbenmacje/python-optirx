@@ -2,10 +2,10 @@
 
 Usage:
 
-    python optrix_demo.py [number_of_packets_to_print] [natnet_version]
+python optrix_demo.py [number_of_packets_to_print] [natnet_version] [ip_addr]
 
-where natnet_version is 2500, 2600, 2700 etc
-for Motive 1.5, 1.6 betas, and 1.7.x respectively.
+where natnet_version is 2500, 2600, 2700, 2900 etc
+for Motive 1.5, 1.6 betas, 1.7, 1.9 respectively.
 """
 
 
@@ -23,6 +23,10 @@ def demo_recv_data():
         from json import dumps, encoder
         encoder.FLOAT_REPR = lambda o: ("%.4f" % o)
 
+    if "-h" in sys.argv[1:] or "--help" in sys.argv[1:]:
+        print(__doc__)
+        exit()
+
     # the first optional command line argument:
     # if given, the number of packets to dump
     if sys.argv[1:]:
@@ -37,9 +41,14 @@ def demo_recv_data():
     if sys.argv[2:]:
         version = tuple(map(int, sys.argv[2]))
     else:
-        version = (2, 7, 0, 0)  # the latest SDK version
+        version = (2, 9, 0, 0)  # the latest SDK version
 
-    dsock = rx.mkdatasock()
+    if sys.argv[3:]:
+        ip_addr = sys.argv[3]
+    else:
+        ip_addr = None
+
+    dsock = rx.mkdatasock(ip_addr)
     count = 0
     while count < max_count:
         data = dsock.recv(rx.MAX_PACKETSIZE)
