@@ -17,7 +17,7 @@ else:
     xrange = range
 
 
-__version__ = "0.3"
+__version__ = "1.9"
 __all__ = [
     # constants:
     'MAX_PACKETSIZE',
