@@ -38,13 +38,13 @@ Usage
 -----
 
 Assuming that Tracking Tools or Motion runs on the same machine and
-broadcasting is enabled with the default parameters, this code
-receives and prints all data frames::
+broadcasting is enabled on the local network interface (not the loopback),
+this code receives and prints all data frames::
 
     import optirx as rx
 
     dsock = rx.mkdatasock()
-    version = (2, 7, 0, 0)  # NatNet version to use
+    version = (2, 9, 0, 0)  # NatNet version to use
     while True:
         data = dsock.recv(rx.MAX_PACKETSIZE)
         packet = rx.unpack(data, version=version)
