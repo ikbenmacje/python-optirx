@@ -23,7 +23,7 @@ Install
 Compatibility
 -------------
 
-Tracking Tools 2.5.0; Motive 1.5.x (NatNet 2.5.0.0), 1.7.x (NatNet 2.7.0.0).
+Tracking Tools 2.5.0; Motive 1.5.x (NatNet 2.5.0.0), 1.7.x (NatNet 2.7.0.0), 1.9.0 (NatNet 2.9.0.0).
 
 
 Build Status
