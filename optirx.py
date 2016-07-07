@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import socket
 import struct
+import threading
 from collections import namedtuple
 from platform import python_version_tuple
 
@@ -26,7 +27,10 @@ __all__ = [
     # payload types:
     'RigidBody', 'Skeleton', 'LabeledMarker', 'ModelDataset',
     # functions:
-    'mkcmdsock', 'mkdatasock', 'unpack']
+    'mkcmdsock', 'mkdatasock', 'unpack',
+
+    #threads:
+    'DataThread']
 
 
 ###
@@ -458,3 +462,57 @@ def mkdatasock(ip_address=None, multicast_address=MULTICAST_ADDRESS, port=PORT_D
     datasock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
     datasock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, SOCKET_BUFSIZE)
     return datasock
+
+
+class DataThread(threading.Thread):
+    def __init__(self, ip_address=None, multicast_address=MULTICAST_ADDRESS,
+                 port=PORT_DATA, version=(2, 5, 0, 0), packet_limit=500,
+                 *args, **kwargs):
+    """Thread used to continually pull data from the data socket.
+
+    Keyword arguments:
+    ip_address -- the IP address passed to `mkdatasock`
+    multicast_address -- the multicast address passed to `mkdatasock`
+    port -- the data port passed to `mkdatasock`
+    version -- the NatNetSDK version tuple passed to `unpack`
+    packet_limit -- the number of packets to keep in the internal queue
+    """
+        super(DataThread, self).__init__(*args, **kwargs)
+
+        self._stop = threading.Event()
+
+        self._socket = mkdatasock(ip_address=ip_address,
+                                  multicast_address=multicast_address,
+                                  port=port)
+
+        self._packet_buf = []
+        self._packet_lock = threading.Lock()
+        self._packet_available = threading.Event()
+        self._packet_limit = packet_limit
+
+        self._version = version
+
+    def cancel(self):
+        self._stop.set()
+
+    def get_packets(self):
+        """Returns a list of all packets seen so far."""
+        if self._packet_available.wait(timeout=0.1):
+            with self._packet_lock:
+                ret = self._packet_buf[:]
+                self._packet_buf = []
+                self._packet_available.clear()
+        else:
+            ret = []
+        return ret
+
+    def run(self):
+        while not self._stop.is_set():
+            data = self._socket.recv(MAX_PACKETSIZE)
+            packet = unpack(data, version=self._version)
+            with self._packet_lock:
+                self._packet_buf.append(packet)
+                self._packet_buf = self._packet_buf[-self._packet_limit:]
+            self._packet_available.set()
+        self._socket.close()
+
