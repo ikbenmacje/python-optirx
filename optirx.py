@@ -469,15 +469,15 @@ class DataThread(threading.Thread):
     def __init__(self, ip_address=None, multicast_address=MULTICAST_ADDRESS,
                  port=PORT_DATA, version=(2, 5, 0, 0), packet_limit=500,
                  *args, **kwargs):
-    """Thread used to continually pull data from the data socket.
+        """Thread used to continually pull data from the data socket.
 
-    Keyword arguments:
-    ip_address -- the IP address passed to `mkdatasock`
-    multicast_address -- the multicast address passed to `mkdatasock`
-    port -- the data port passed to `mkdatasock`
-    version -- the NatNetSDK version tuple passed to `unpack`
-    packet_limit -- the number of packets to keep in the internal queue
-    """
+        Keyword arguments:
+        ip_address -- the IP address passed to `mkdatasock`
+        multicast_address -- the multicast address passed to `mkdatasock`
+        port -- the data port passed to `mkdatasock`
+        version -- the NatNetSDK version tuple passed to `unpack`
+        packet_limit -- the number of packets to keep in the internal queue
+        """
         super(DataThread, self).__init__(*args, **kwargs)
 
         self._stop = threading.Event()
