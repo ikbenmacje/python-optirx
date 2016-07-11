@@ -10,6 +10,7 @@ import struct
 import threading
 from collections import namedtuple
 from platform import python_version_tuple
+from time import sleep
 
 
 if python_version_tuple()[0] < "3":
@@ -484,6 +485,7 @@ class DataThread(threading.Thread):
         self._socket = mkdatasock(ip_address=ip_address,
                                   multicast_address=multicast_address,
                                   port=port)
+        self._socket.setblocking(0)
 
         self._packet_buf = []
         self._packet_lock = threading.Lock()
@@ -508,11 +510,16 @@ class DataThread(threading.Thread):
 
     def run(self):
         while not self._stop.is_set():
-            data = self._socket.recv(MAX_PACKETSIZE)
-            packet = unpack(data, version=self._version)
-            with self._packet_lock:
-                self._packet_buf.append(packet)
-                self._packet_buf = self._packet_buf[-self._packet_limit:]
-            self._packet_available.set()
+            try:
+                data = self._socket.recv(MAX_PACKETSIZE)
+            except socket.error:
+                # Thrown when recv finds no data (non-blocking mode)
+                sleep(0.1)
+            else:
+                packet = unpack(data, version=self._version)
+                with self._packet_lock:
+                    self._packet_buf.append(packet)
+                    self._packet_buf = self._packet_buf[-self._packet_limit:]
+                self._packet_available.set()
         self._socket.close()
 
