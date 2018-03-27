@@ -457,7 +457,7 @@ def mkdatasock(ip_address=None, multicast_address=MULTICAST_ADDRESS, port=PORT_D
     ip_address = gethostip() if not ip_address else ip_address
     datasock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
     datasock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    datasock.bind((ip_address, port))
+    datasock.bind(('', port))
     # join a multicast group
     mreq = struct.pack("=4sl", socket.inet_aton(multicast_address), socket.INADDR_ANY)
     datasock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
